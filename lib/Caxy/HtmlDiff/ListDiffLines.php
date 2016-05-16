@@ -10,6 +10,8 @@ class ListDiffLines extends ListDiff
     public function build()
     {
         $this->listByLines($this->oldText, $this->newText);
+
+
     }
 
     protected function listByLines($old, $new)
@@ -19,13 +21,19 @@ class ListDiffLines extends ListDiff
         /* @var $oldDom \simple_html_dom */
         $oldDom = HtmlDomParser::str_get_html($old);
 
-        $ul = $newDom->find('ul', 0);
+        $newUl = $newDom->find('ul', 0);
+        $oldUl = $oldDom->find('ul', 0);
 
+        $operations = $this->getListItemOperations($oldUl, $newUl);
+    }
+
+    protected function getListItemOperations($oldUl, $newUl)
+    {
         $lineHashMap = [];
         $lines = [];
         $hashes = [];
         $newLineText = [];
-        foreach ($ul->children() as $index => $li) {
+        foreach ($newUl->children() as $index => $li) {
             $line = $index + 1;
             $newLineText[$line] = $li->innertext;
             $hash = hash('md5', $li->innertext);
@@ -44,8 +52,6 @@ class ListDiffLines extends ListDiff
 
             $e[] = ['serial' => $lineHash['serial'], 'last' => $last];
         }
-
-        $oldUl = $oldDom->find('ul', 0);
 
         $oldLineHashMap = [];
         $oldLines = [];
@@ -103,30 +109,28 @@ class ListDiffLines extends ListDiff
         }
 
         $operations = [];
-        $lineInOld = 1;
-        $lineInNew = 1;
-        for ($i = 1; $i <= $m; $i++) {
-            $match = $j[$i];
-
+        $lineInOld = 0;
+        $lineInNew = 0;
+        $j[$m + 1] = $n + 1;
+        foreach ($j as $i => $match) {
             if ($match !== 0) {
-                if ($match > $lineInNew && $i === $lineInOld) {
+                if ($match > ($lineInNew + 1) && $i === ($lineInOld + 1)) {
                     // Add items before this
-                } elseif ($i > $lineInOld && $match === $lineInNew) {
+                    $operations[] = new Operation(Operation::ADDED, 0, 0, $lineInNew + 1, $match - 1);
+                } elseif ($i > ($lineInOld + 1) && $match === ($lineInNew + 1)) {
                     // Delete items before this
-                }
-                if ($lineInNew === $match) {
-                    // Nothing new to add
+                    $operations[] = new Operation(Operation::DELETED, $lineInOld + 1, $i - 1, $lineInNew, $lineInNew);
+                } elseif ($match !== ($lineInNew + 1) && $i !== ($lineInOld + 1)) {
+                    // Change
+                    $operations[] = new Operation(Operation::CHANGED, $lineInOld + 1, $i - 1, $lineInNew + 1, $match - 1);
                 }
 
-                if ($lineInOld === $i) {
-                    // Nothing to remove
-                }
+                $lineInNew = $match;
+                $lineInOld = $i;
             }
-
-
         }
 
-        var_dump($j);
+        return $operations;
     }
 
     /**
