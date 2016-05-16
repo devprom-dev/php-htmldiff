@@ -97,6 +97,15 @@ class HtmlDiff extends AbstractDiff
             return $this->content;
         }
 
+        // Pre-processing Optimizations
+
+        // 1. Equality
+        if ($this->oldText == $this->newText) {
+            return $this->newText;
+        }
+
+        // 2. Common Prefix/ Suffix
+
         $this->splitInputsToWords();
         $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
@@ -111,6 +120,71 @@ class HtmlDiff extends AbstractDiff
         }
 
         return $this->content;
+    }
+
+    protected function diffCommonPrefixSuffix($old, $new)
+    {
+
+    }
+
+    protected function diffCommonPrefix($old, $new)
+    {
+        // Quick check for common null cases.
+        if (strlen($old) == 0 || strlen($new) == 0 || substr($old, 0, 1) != substr($new, 0, 1)) {
+            return false;
+        }
+
+        // Binary Search
+        $pointerMin = 0;
+        $pointerMax = min(strlen($old), strlen($new));
+        $pointerMid = $pointerMax;
+        $pointerStart = 0;
+        while ($pointerMin < $pointerMid) {
+            $cmp = substr_compare(
+                $old,
+                substr($new, $pointerStart, $pointerMid - $pointerStart),
+                $pointerStart,
+                $pointerMid - $pointerStart
+            );
+            if (0 === $cmp) {
+                $pointerMin = $pointerMid;
+                $pointerStart = $pointerMin;
+            } else {
+                $pointerMax = $pointerMid;
+            }
+            $pointerMid = ($pointerMax - $pointerMin) / 2 + $pointerMin;
+        }
+        return $pointerMid;
+    }
+
+    protected function diffCommonSuffix($old, $new)
+    {
+        // Quick check for common null cases.
+        if (strlen($old) == 0 || strlen($new) == 0 || substr($old, strlen($old) - 1, 1) != substr($new, strlen($new) - 1, 1)) {
+            return 0;
+        }
+
+        // Binary Search
+        $pointerMin = 0;
+        $pointerMax = min(strlen($old), strlen($new));
+        $pointerMid = $pointerMax;
+        $pointerEnd = 0;
+        while ($pointerMin < $pointerMid) {
+            $cmp = substr_compare(
+                $old,
+                substr($new, strlen($new) - $pointerMid, $pointerMid - $pointerEnd),
+                strlen($old) - $pointerMid,
+                $pointerMid - $pointerEnd
+            );
+            if (0 === $cmp) {
+                $pointerMin = $pointerMid;
+                $pointerEnd = $pointerMin;
+            } else {
+                $pointerMax = $pointerMid;
+            }
+            $pointerMid = ($pointerMax - $pointerMin) / 2 + $pointerMin;
+        }
+        return $pointerMid;
     }
 
     protected function indexNewWords()
