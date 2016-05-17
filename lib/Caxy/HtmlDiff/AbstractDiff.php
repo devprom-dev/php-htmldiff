@@ -372,7 +372,7 @@ abstract class AbstractDiff
      */
     protected function isPartOfWord($text)
     {
-        return ctype_alnum(str_replace($this->config->getSpecialCaseChars(), '', $text));
+        return $this->isAlphaNumeric(str_replace($this->config->getSpecialCaseChars(), '', $text));
     }
 
     /**
@@ -388,65 +388,65 @@ abstract class AbstractDiff
         foreach ($characterString as $i => $character) {
             switch ($mode) {
                 case 'character':
-                if ($this->isStartOfTag($character)) {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = '<';
-                    $mode = 'tag';
-                } elseif (preg_match("/\s/", $character)) {
-                    if ($current_word !== '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = preg_replace('/\s+/S', ' ', $character);
-                    $mode = 'whitespace';
-                } else {
-                    if (
-                        (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
-                    ) {
-                        $current_word .= $character;
-                    } else {
-                        $words[] = $current_word;
-                        $current_word = $character;
-                    }
-                }
-                break;
-                case 'tag' :
-                if ($this->isEndOfTag($character)) {
-                    $current_word .= '>';
-                    $words[] = $current_word;
-                    $current_word = '';
-
-                    if (!preg_match('[^\s]', $character)) {
+                    if ($this->isStartOfTag($character)) {
+                        if ($current_word != '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = '<';
+                        $mode = 'tag';
+                    } elseif (preg_match("/\s/", $character)) {
+                        if ($current_word !== '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = preg_replace('/\s+/S', ' ', $character);
                         $mode = 'whitespace';
                     } else {
+                        if (
+                            ($this->isAlphaNumeric($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                            (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
+                        ) {
+                            $current_word .= $character;
+                        } else {
+                            $words[] = $current_word;
+                            $current_word = $character;
+                        }
+                    }
+                    break;
+                case 'tag' :
+                    if ($this->isEndOfTag($character)) {
+                        $current_word .= '>';
+                        $words[] = $current_word;
+                        $current_word = '';
+
+                        if (!preg_match('[^\s]', $character)) {
+                            $mode = 'whitespace';
+                        } else {
+                            $mode = 'character';
+                        }
+                    } else {
+                        $current_word .= $character;
+                    }
+                    break;
+                case 'whitespace':
+                    if ($this->isStartOfTag($character)) {
+                        if ($current_word !== '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = '<';
+                        $mode = 'tag';
+                    } elseif (preg_match("/\s/", $character)) {
+                        $current_word .= $character;
+                        $current_word = preg_replace('/\s+/S', ' ', $current_word);
+                    } else {
+                        if ($current_word != '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = $character;
                         $mode = 'character';
                     }
-                } else {
-                    $current_word .= $character;
-                }
-                break;
-                case 'whitespace':
-                if ($this->isStartOfTag($character)) {
-                    if ($current_word !== '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = '<';
-                    $mode = 'tag';
-                } elseif (preg_match("/\s/", $character)) {
-                    $current_word .= $character;
-                    $current_word = preg_replace('/\s+/S', ' ', $current_word);
-                } else {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = $character;
-                    $mode = 'character';
-                }
-                break;
+                    break;
                 default:
-                break;
+                    break;
             }
         }
         if ($current_word != '') {
@@ -495,5 +495,15 @@ abstract class AbstractDiff
     {
         // as suggested by @onassar
         return preg_split('//u', $value);
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return boolean
+     */
+    protected function isAlphaNumeric($value)
+    {
+        return mb_strlen(preg_replace("/\p{L}|\p{N}|[_.-]/u", '', $value)) < 1;
     }
 }
