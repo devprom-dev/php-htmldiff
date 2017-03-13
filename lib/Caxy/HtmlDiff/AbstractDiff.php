@@ -13,12 +13,14 @@ abstract class AbstractDiff
      * @deprecated since 0.1.0
      */
     public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
+
     /**
      * @var array
      *
      * @deprecated since 0.1.0
      */
     public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
+
     /**
      * @var bool
      *
@@ -35,18 +37,22 @@ abstract class AbstractDiff
      * @var string
      */
     protected $content;
+
     /**
      * @var string
      */
     protected $oldText;
+
     /**
      * @var string
      */
     protected $newText;
+
     /**
      * @var array
      */
     protected $oldWords = array();
+
     /**
      * @var array
      */
@@ -55,7 +61,23 @@ abstract class AbstractDiff
     /**
      * @var DiffCache[]
      */
-    private $diffCaches = array();
+    protected $diffCaches = array();
+
+    /**
+     * @var \HTMLPurifier
+     */
+    protected $purifier;
+
+    /**
+     * @var \HTMLPurifier_Config|null
+     */
+    protected $purifierConfig = null;
+
+    /**
+     * @see array_slice_cached();
+     * @var bool
+     */
+    protected $resetCache = false;
 
     /**
      * AbstractDiff constructor.
@@ -70,7 +92,7 @@ abstract class AbstractDiff
     {
         mb_substitute_character(0x20);
 
-        $this->config = HtmlDiffConfig::create()->setEncoding($encoding);
+        $this->setConfig(HtmlDiffConfig::create()->setEncoding($encoding));
 
         if ($specialCaseTags !== null) {
             $this->config->setSpecialCaseTags($specialCaseTags);
@@ -80,8 +102,8 @@ abstract class AbstractDiff
             $this->config->setGroupDiffs($groupDiffs);
         }
 
-        $this->oldText = $this->purifyHtml($oldText);
-        $this->newText = $this->purifyHtml($newText);
+        $this->oldText = $oldText;
+        $this->newText = $newText;
         $this->content = '';
     }
 
@@ -91,12 +113,48 @@ abstract class AbstractDiff
     abstract public function build();
 
     /**
+     * Initializes HTMLPurifier with cache location.
+     *
+     * @param null|string $defaultPurifierSerializerCache
+     */
+    public function initPurifier($defaultPurifierSerializerCache = null)
+    {
+        if (null !== $this->purifierConfig) {
+            $HTMLPurifierConfig  = $this->purifierConfig;
+        } else {
+            $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
+        }
+
+        // Cache.SerializerPath defaults to Null and sets
+        // the location to inside the vendor HTMLPurifier library
+        // under the DefinitionCache/Serializer folder.
+        if (!is_null($defaultPurifierSerializerCache)) {
+            $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
+        }
+
+        $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
+    }
+
+    /**
+     * Prepare (purify) the HTML
+     *
+     * @return void
+     */
+    protected function prepare()
+    {
+        $this->initPurifier($this->config->getPurifierCacheLocation());
+
+        $this->oldText = $this->purifyHtml($this->oldText);
+        $this->newText = $this->purifyHtml($this->newText);
+    }
+
+    /**
      * @return DiffCache|null
      */
     protected function getDiffCache()
     {
         if (!$this->hasDiffCache()) {
-            return;
+            return null;
         }
 
         $hash = spl_object_hash($this->getConfig()->getCacheProvider());
@@ -299,6 +357,14 @@ abstract class AbstractDiff
     }
 
     /**
+     * @param \HTMLPurifier_Config $config
+     */
+    public function setHTMLPurifierConfig(\HTMLPurifier_Config $config)
+    {
+        $this->purifierConfig = $config;
+    }
+
+    /**
      * @param string $tag
      *
      * @return string
@@ -356,13 +422,31 @@ abstract class AbstractDiff
             return $this->getStringBetween($html, '<body>');
         }
 
-        return $html;
+        return $this->purifier->purify($html);
     }
 
     protected function splitInputsToWords()
     {
-        $this->oldWords = $this->convertHtmlToListOfWords($this->explode($this->oldText));
-        $this->newWords = $this->convertHtmlToListOfWords($this->explode($this->newText));
+        $this->setOldWords($this->convertHtmlToListOfWords($this->explode($this->oldText)));
+        $this->setNewWords($this->convertHtmlToListOfWords($this->explode($this->newText)));
+    }
+
+    /**
+     * @param array $oldWords
+     */
+    protected function setOldWords(array $oldWords)
+    {
+        $this->resetCache = true;
+        $this->oldWords   = $oldWords;
+    }
+
+    /**
+     * @param array $newWords
+     */
+    protected function setNewWords(array $newWords)
+    {
+        $this->resetCache = true;
+        $this->newWords   = $newWords;
     }
 
     /**
