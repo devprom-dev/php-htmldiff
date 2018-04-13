@@ -81,8 +81,11 @@ class ListDiffLines extends AbstractDiff
     {
         /* @var $newDom \simple_html_dom */
         $newDom = HtmlDomParser::str_get_html($new);
+        if ( !is_object($newDom) ) return '';
+        
         /* @var $oldDom \simple_html_dom */
         $oldDom = HtmlDomParser::str_get_html($old);
+        if ( !is_object($oldDom) ) return '';
 
         $newListNode = $this->findListNode($newDom);
         $oldListNode = $this->findListNode($oldDom);
