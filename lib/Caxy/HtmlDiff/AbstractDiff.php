@@ -478,42 +478,44 @@ abstract class AbstractDiff
         foreach ($characterString as $i => $character) {
             switch ($mode) {
                 case 'character':
-                if ($this->isStartOfTag($character)) {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
+                    if ($this->isStartOfTag($character)) {
+                        if ($current_word != '') {
+                            $words[] = $current_word;
+                        }
 
-                    $current_word = '<';
-                    $mode = 'tag';
-                } elseif (preg_match("/\s/u", $character)) {
-                    if ($current_word !== '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = $keepNewLines ? $character : preg_replace('/\s+/Su', ' ', $character);
-                    $mode = 'whitespace';
-                } else {
-                    if (
-                        (($this->ctypeAlphanumUnicode($character)) && (mb_strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
-                    ) {
-                        $current_word .= $character;
+                        $current_word = '<';
+                        $mode = 'tag';
+                    } elseif (preg_match("/\s/u", $character)) {
+                        if ($current_word !== '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = $keepNewLines ? $character : preg_replace('/\s+/Su', ' ', $character);
+                        $mode = 'whitespace';
                     } else {
                         if (
-                            ($this->isAlphaNumeric($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                            (($this->ctypeAlphanumUnicode($character)) && (mb_strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
                             (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
                         ) {
                             $current_word .= $character;
                         } else {
-                            $words[] = $current_word;
-                            $current_word = $character;
+                            if (
+                                ($this->isAlphaNumeric($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                                (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
+                            ) {
+                                $current_word .= $character;
+                            } else {
+                                $words[] = $current_word;
+                                $current_word = $character;
+                            }
                         }
                     }
                     break;
-                case 'tag' :
+                case 'tag':
                     if ($this->isEndOfTag($character)) {
                         $current_word .= '>';
                         $words[] = $current_word;
                         $current_word = '';
+                    }
 
                     if (!preg_match('[^\s]u', $character)) {
                         $mode = 'whitespace';
@@ -522,18 +524,19 @@ abstract class AbstractDiff
                     }
                     break;
                 case 'whitespace':
-                if ($this->isStartOfTag($character)) {
-                    if ($current_word !== '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = '<';
-                    $mode = 'tag';
-                } elseif (preg_match("/\s/u", $character)) {
-                    $current_word .= $character;
-                    if (!$keepNewLines) $current_word = preg_replace('/\s+/Su', ' ', $current_word);
-                } else {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
+                    if ($this->isStartOfTag($character)) {
+                        if ($current_word !== '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = '<';
+                        $mode = 'tag';
+                    } elseif (preg_match("/\s/u", $character)) {
+                        $current_word .= $character;
+                        if (!$keepNewLines) $current_word = preg_replace('/\s+/Su', ' ', $current_word);
+                    } else {
+                        if ($current_word != '') {
+                            $words[] = $current_word;
+                        }
                     }
                     break;
                 default:
