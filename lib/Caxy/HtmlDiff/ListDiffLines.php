@@ -3,7 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 use Caxy\HtmlDiff\Strategy\ListItemMatchStrategy;
-use Sunra\PhpSimple\HtmlDomParser;
+use KubAT\PhpSimple\HtmlDomParser;
 
 class ListDiffLines extends AbstractDiff
 {
@@ -122,7 +122,7 @@ class ListDiffLines extends AbstractDiff
         $oldLength = count($oldListText);
         $newLength = count($newListText);
 
-        $operations = [];
+        $operations = array();
         $currentLineInOld = 0;
         $currentLineInNew = 0;
         $lcsMatches[$oldLength + 1] = $newLength + 1;

@@ -132,6 +132,11 @@ abstract class AbstractDiff
             $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
         }
 
+        // Cache.SerializerPermissions defaults to 0744.
+        // This setting allows the cache files to be deleted by any user, as they are typically
+        // created by the web/php user (www-user, php-fpm, etc.)
+        $HTMLPurifierConfig->set('Cache.SerializerPermissions', 0777);
+
         $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
     }
 
@@ -393,9 +398,9 @@ abstract class AbstractDiff
      */
     protected function getStringBetween($str, $start, $end)
     {
-        $expStr = explode($start, $str, 2);
+        $expStr = mb_split($start, $str, 2);
         if (count($expStr) > 1) {
-            $expStr = explode($end, $expStr[ 1 ]);
+            $expStr = mb_split($end, $expStr[ 1 ]);
             if (count($expStr) > 1) {
                 array_pop($expStr);
 
@@ -456,7 +461,7 @@ abstract class AbstractDiff
      */
     protected function isPartOfWord($text)
     {
-        return $this->isAlphaNumeric(str_replace($this->config->getSpecialCaseChars(), '', $text));
+        return $this->ctypeAlphanumUnicode(str_replace($this->config->getSpecialCaseChars(), '', $text));
     }
 
     /**
@@ -469,21 +474,29 @@ abstract class AbstractDiff
         $mode = 'character';
         $current_word = '';
         $words = array();
+        $keepNewLines = $this->getConfig()->isKeepNewLines();
         foreach ($characterString as $i => $character) {
             switch ($mode) {
                 case 'character':
-                    if ($this->isStartOfTag($character)) {
-                        if ($current_word != '') {
-                            $words[] = $current_word;
-                        }
-                        $current_word = '<';
-                        $mode = 'tag';
-                    } elseif (preg_match("/\s/", $character)) {
-                        if ($current_word !== '') {
-                            $words[] = $current_word;
-                        }
-                        $current_word = preg_replace('/\s+/S', ' ', $character);
-                        $mode = 'whitespace';
+                if ($this->isStartOfTag($character)) {
+                    if ($current_word != '') {
+                        $words[] = $current_word;
+                    }
+
+                    $current_word = '<';
+                    $mode = 'tag';
+                } elseif (preg_match("/\s/u", $character)) {
+                    if ($current_word !== '') {
+                        $words[] = $current_word;
+                    }
+                    $current_word = $keepNewLines ? $character : preg_replace('/\s+/Su', ' ', $character);
+                    $mode = 'whitespace';
+                } else {
+                    if (
+                        (($this->ctypeAlphanumUnicode($character)) && (mb_strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
+                    ) {
+                        $current_word .= $character;
                     } else {
                         if (
                             ($this->isAlphaNumeric($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
@@ -502,31 +515,25 @@ abstract class AbstractDiff
                         $words[] = $current_word;
                         $current_word = '';
 
-                        if (!preg_match('[^\s]', $character)) {
-                            $mode = 'whitespace';
-                        } else {
-                            $mode = 'character';
-                        }
+                    if (!preg_match('[^\s]u', $character)) {
+                        $mode = 'whitespace';
                     } else {
                         $current_word .= $character;
                     }
                     break;
                 case 'whitespace':
-                    if ($this->isStartOfTag($character)) {
-                        if ($current_word !== '') {
-                            $words[] = $current_word;
-                        }
-                        $current_word = '<';
-                        $mode = 'tag';
-                    } elseif (preg_match("/\s/", $character)) {
-                        $current_word .= $character;
-                        $current_word = preg_replace('/\s+/S', ' ', $current_word);
-                    } else {
-                        if ($current_word != '') {
-                            $words[] = $current_word;
-                        }
-                        $current_word = $character;
-                        $mode = 'character';
+                if ($this->isStartOfTag($character)) {
+                    if ($current_word !== '') {
+                        $words[] = $current_word;
+                    }
+                    $current_word = '<';
+                    $mode = 'tag';
+                } elseif (preg_match("/\s/u", $character)) {
+                    $current_word .= $character;
+                    if (!$keepNewLines) $current_word = preg_replace('/\s+/Su', ' ', $current_word);
+                } else {
+                    if ($current_word != '') {
+                        $words[] = $current_word;
                     }
                     break;
                 default:
@@ -567,7 +574,7 @@ abstract class AbstractDiff
      */
     protected function isWhiteSpace($value)
     {
-        return !preg_match('[^\s]', $value);
+        return !preg_match('[^\s]u', $value);
     }
 
     /**
@@ -578,7 +585,17 @@ abstract class AbstractDiff
     protected function explode($value)
     {
         // as suggested by @onassar
-        return preg_split('//u', $value);
+        return preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /**
+     * @param string $str
+     *
+     * @return bool
+     */
+    protected function ctypeAlphanumUnicode($str)
+    {
+        return preg_match("/^[a-zA-Z0-9\pL]+$/u", $str);
     }
 
     /**
