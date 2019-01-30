@@ -28,6 +28,12 @@ class HtmlDiffConfig
     protected $insertSpaceInReplace = false;
 
     /**
+     * Whether to keep newlines in the diff
+     * @var bool
+     */
+    protected $keepNewLines = false;
+
+    /**
      * @var string
      */
     protected $encoding = 'UTF-8';
@@ -48,6 +54,7 @@ class HtmlDiffConfig
         'i' => '[[REPLACE_EM]]',
         'a' => '[[REPLACE_A]]',
         'img' => '[[REPLACE_IMG]]',
+        'pre' => '[[REPLACE_PRE]]',
     );
 
     /**
@@ -294,6 +301,22 @@ class HtmlDiffConfig
     }
 
     /**
+     * @return bool
+     */
+    public function isKeepNewLines()
+    {
+        return $this->keepNewLines;
+    }
+
+    /**
+     * @param bool $keepNewLines
+     */
+    public function setKeepNewLines($keepNewLines)
+    {
+        $this->keepNewLines = $keepNewLines;
+    }
+
+    /**
      * @return array
      */
     public function getIsolatedDiffTags()
@@ -322,7 +345,7 @@ class HtmlDiffConfig
     public function addIsolatedDiffTag($tag, $placeholder = null)
     {
         if (null === $placeholder) {
-            $placeholder = sprintf('[[REPLACE_%s]]', strtoupper($tag));
+            $placeholder = sprintf('[[REPLACE_%s]]', mb_strtoupper($tag));
         }
 
         if ($this->isIsolatedDiffTag($tag) && $this->isolatedDiffTags[$tag] !== $placeholder) {

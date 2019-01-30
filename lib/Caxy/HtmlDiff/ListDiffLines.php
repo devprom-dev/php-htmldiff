@@ -3,7 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 use Caxy\HtmlDiff\Strategy\ListItemMatchStrategy;
-use Sunra\PhpSimple\HtmlDomParser;
+use KubAT\PhpSimple\HtmlDomParser;
 
 class ListDiffLines extends AbstractDiff
 {
@@ -81,8 +81,11 @@ class ListDiffLines extends AbstractDiff
     {
         /* @var $newDom \simple_html_dom */
         $newDom = HtmlDomParser::str_get_html($new);
+        if ( !is_object($newDom) ) return '';
+        
         /* @var $oldDom \simple_html_dom */
         $oldDom = HtmlDomParser::str_get_html($old);
+        if ( !is_object($oldDom) ) return '';
 
         $newListNode = $this->findListNode($newDom);
         $oldListNode = $this->findListNode($oldDom);
@@ -119,7 +122,7 @@ class ListDiffLines extends AbstractDiff
         $oldLength = count($oldListText);
         $newLength = count($newListText);
 
-        $operations = [];
+        $operations = array();
         $currentLineInOld = 0;
         $currentLineInNew = 0;
         $lcsMatches[$oldLength + 1] = $newLength + 1;
