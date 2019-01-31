@@ -3,7 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 use Caxy\HtmlDiff\Strategy\ListItemMatchStrategy;
-use KubAT\PhpSimple\HtmlDomParser;
+use Sunra\PhpSimple\HtmlDomParser;
 
 class ListDiffLines extends AbstractDiff
 {
