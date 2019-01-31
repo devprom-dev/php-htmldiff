@@ -66,7 +66,7 @@ abstract class AbstractDiff
     /**
      * @var \HTMLPurifier
      */
-    protected $purifier;
+    private $purifier;
 
     /**
      * @var \HTMLPurifier_Config|null
@@ -149,8 +149,11 @@ abstract class AbstractDiff
     {
         $this->initPurifier($this->config->getPurifierCacheLocation());
 
-        $this->oldText = $this->purifyHtml($this->oldText);
-        $this->newText = $this->purifyHtml($this->newText);
+        $oldText = $this->purifyHtml($this->oldText);
+        if ( $oldText != "" ) $this->oldText = $oldText;
+
+        $newText = $this->purifyHtml($this->newText);
+        if ( $newText != "" ) $this->newText = $newText;
     }
 
     /**
