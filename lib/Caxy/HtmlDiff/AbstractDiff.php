@@ -406,7 +406,7 @@ abstract class AbstractDiff
      */
     protected function purifyHtml($html)
     {
-        return $this->purifier->purify($html);
+        return $html; //$this->purifier->purify($html);
     }
 
     protected function splitInputsToWords()
