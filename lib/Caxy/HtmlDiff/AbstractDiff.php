@@ -471,7 +471,7 @@ abstract class AbstractDiff
                         $mode = 'whitespace';
                     } else {
                         if (
-                            (($this->ctypeAlphanumUnicode($character)) && (mb_strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                            (($this->ctypeAlphanumUnicode($character) === true) && ($this->stringUtil->strlen($current_word) === 0 || $this->isPartOfWord($current_word))) ||
                             (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
                         ) {
                             $current_word .= $character;
@@ -494,13 +494,15 @@ abstract class AbstractDiff
                     } else {
                         $current_word .= $character;
                     }
-                    $current_word = $keepNewLines ? $character : preg_replace('/\s+/Su', ' ', $character);
-                    $mode = 'whitespace';
-                } else {
-                    if (
-                        (($this->ctypeAlphanumUnicode($character) === true) && ($this->stringUtil->strlen($current_word) === 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
-                    ) {
+                    break;
+                case 'whitespace':
+                    if ($this->isStartOfTag($character)) {
+                        if ($current_word !== '') {
+                            $words[] = $current_word;
+                        }
+                        $current_word = '<';
+                        $mode = 'tag';
+                    } elseif (preg_match("/\s/u", $character)) {
                         $current_word .= $character;
                         if (!$keepNewLines) $current_word = preg_replace('/\s+/Su', ' ', $current_word);
                     } else {
@@ -569,6 +571,6 @@ abstract class AbstractDiff
      */
     protected function ctypeAlphanumUnicode($str)
     {
-        return preg_match("/^[a-zA-Z0-9\pL]+$/u", $str) === 1;
+        return mb_strlen(preg_replace("/\p{L}|\p{N}|[_.-]/u", '', $str)) < 1;
     }
 }
