@@ -179,9 +179,13 @@ class ListDiffLines extends AbstractDiff
     protected function getListTextArray($listNode)
     {
         $output = array();
-        foreach ($listNode->children() as $listItem) {
-            $output[] = $this->getRelevantNodeText($listItem);
-        }
+	if ( !is_array($listNode) ) $listNode = array($listNode);
+	
+	foreach( $listNode as $node ) {
+	        foreach ($node->children() as $listItem) {
+        	    $output[] = $this->getRelevantNodeText($listItem);
+	        }
+	}
 
         return $output;
     }
