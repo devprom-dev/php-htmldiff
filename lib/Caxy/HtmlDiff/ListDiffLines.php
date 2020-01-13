@@ -3,7 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 use Caxy\HtmlDiff\Strategy\ListItemMatchStrategy;
-use Sunra\PhpSimple\HtmlDomParser;
+use voku\helper\HtmlDomParser;
 
 class ListDiffLines extends AbstractDiff
 {
@@ -82,7 +82,9 @@ class ListDiffLines extends AbstractDiff
         /* @var $newDom \simple_html_dom */
         $newDom = HtmlDomParser::str_get_html($new);
         if ( !is_object($newDom) ) return '';
-        
+        \Logger::getLogger('Commands')->error(var_export($newDom,true));
+
+
         /* @var $oldDom \simple_html_dom */
         $oldDom = HtmlDomParser::str_get_html($old);
         if ( !is_object($oldDom) ) return '';
@@ -113,10 +115,13 @@ class ListDiffLines extends AbstractDiff
      */
     protected function getListItemOperations($oldListNode, $newListNode)
     {
+        \Logger::getLogger('Commands')->error(var_export("1",true));
         // Prepare arrays of list item content to use in LCS algorithm
         $oldListText = $this->getListTextArray($oldListNode);
+        \Logger::getLogger('Commands')->error(var_export("2",true));
         $newListText = $this->getListTextArray($newListNode);
-
+\Logger::getLogger('Commands')->error(var_export($oldListText,true));
+\Logger::getLogger('Commands')->error(var_export($newListNode,true));
         $lcsMatches = $this->lcsService->longestCommonSubsequence($oldListText, $newListText);
 
         $oldLength = count($oldListText);
@@ -179,13 +184,10 @@ class ListDiffLines extends AbstractDiff
     protected function getListTextArray($listNode)
     {
         $output = array();
-	if ( !is_array($listNode) ) $listNode = array($listNode);
-	
-	foreach( $listNode as $node ) {
-	        foreach ($node->children() as $listItem) {
-        	    $output[] = $this->getRelevantNodeText($listItem);
-	        }
-	}
+
+        foreach ($listNode->children() as $listItem) {
+            $output[] = $this->getRelevantNodeText($listItem);
+        }
 
         return $output;
     }
@@ -195,23 +197,8 @@ class ListDiffLines extends AbstractDiff
      *
      * @return string
      */
-    protected function getRelevantNodeText($node)
-    {
-        if (!$node->hasChildNodes()) {
-            return $node->innertext();
-        }
-
-        $output = '';
-        foreach ($node->nodes as $child) {
-            /* @var $child \simple_html_dom_node */
-            if (!$child->hasChildNodes()) {
-                $output .= $child->outertext();
-            } elseif (in_array($child->nodeName(), static::$listContentTags, true)) {
-                $output .= sprintf('<%1$s>%2$s</%1$s>', $child->nodeName(), $this->getRelevantNodeText($child));
-            }
-        }
-
-        return $output;
+    protected function getRelevantNodeText($node) {
+        return $node->text();
     }
 
     /**
@@ -255,6 +242,9 @@ class ListDiffLines extends AbstractDiff
         $indexInOld = 0;
         $indexInNew = 0;
         $lastOperation = null;
+
+        if ( is_array($oldListNode) ) $oldListNode = array_shift($oldListNode);
+        if ( is_array($newListNode) ) $newListNode = array_shift($newListNode);
 
         foreach ($operations as $operation) {
             $replaced = false;
