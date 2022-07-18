@@ -15,6 +15,10 @@ bug fixes, and enhancements to the original code.
 
 For more information on these modifications, read the [differences from rashid2538/php-htmldiff][differences] or view the [CHANGELOG][changelog].
 
+## Demo
+
+https://php-htmldiff.caxy.com/
+
 ## Installation
 
 The recommended way to install php-htmldiff is through [Composer][composer].
@@ -40,6 +44,10 @@ use Caxy\HtmlDiff\HtmlDiff;
 $htmlDiff = new HtmlDiff($oldHtml, $newHtml);
 $content = $htmlDiff->build();
 ```
+
+## CSS Example
+
+See https://github.com/caxy/php-htmldiff/blob/master/demo/codes.css for starter CSS you can use for displaying the HTML diff output.
 
 ## Configuration
 
@@ -127,6 +135,10 @@ $config
     
     // Pass an instance of \Doctrine\Common\Cache\Cache to cache the calculated diffs.
     ->setCacheProvider(null)
+
+    // Disable the HTML purifier (only do this if you known what you're doing)
+    // This bundle heavily relies on the purified input from ezyang/htmlpurifier
+    ->setPurifierEnabled(true)
     
     // Set the cache directory that HTMLPurifier should use.
     ->setPurifierCacheLocation(null)
@@ -136,10 +148,7 @@ $config
     
     // List of characters to consider part of a single word when in the middle of text.
     ->setSpecialCaseChars(array('.', ',', '(', ')', '\''))
-    
-    // List of tags to treat as special case tags.
-    ->setSpecialCaseTags(array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p'))
-    
+        
     // List of tags (and their replacement strings) to be diffed in isolation.
     ->setIsolatedDiffTags(array(
         'ol'     => '[[REPLACE_ORDERED_LIST]]',
@@ -192,12 +201,11 @@ php-htmldiff is available under [GNU General Public License, version 2][gnu]. Se
     * Maybe add abstraction layer for cache + adapter for doctrine cache
 * Make HTML Purifier an optional dependency - possibly use abstraction layer for purifiers so alternatives could be used (or none at all for performance)
 * Expose configuration for HTML Purifier (used in table diffing) - currently only cache dir is configurable through HtmlDiffConfig object
-* Add option to enable using HTML Purifier to purify all input
 * Performance improvements (we have 1 benchmark test, we should probably get more)
     * Algorithm improvements - trimming alike text at start and ends, store nested diff results in memory to re-use (like we do w/ caching)
     * Benchmark using DOMDocument vs. alternatives vs. string parsing
+    * Consider not using string parsing for HtmlDiff in order to avoid having to create many DOMDocument instances in ListDiff and TableDiff
 * Benchmarking
-* Look into removing dependency on php-simple-html-dom-parser library - possibly find alternative or no library at all. Consider how this affects performance.
 * Refactoring (but... tests first)
     * Overall design/architecture improvements
     * API improvements so a new HtmlDiff isn't required for each new diff (especially so that configuration can be re-used)
