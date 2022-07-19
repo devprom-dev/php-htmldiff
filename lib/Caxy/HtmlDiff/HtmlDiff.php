@@ -438,8 +438,8 @@ class HtmlDiff extends AbstractDiff
     protected function getAttributeFromTag($text, $attribute)
     {
         $matches = array();
-        if (preg_match(sprintf('/<[^>]*\b%s\s*=\s*([\'"])(.*)\1[^>]*>/iu', $attribute), $text, $matches)) {
-            return htmlspecialchars_decode($matches[2]);
+        if (preg_match(sprintf('/%s\s*=\s*[\'"]([^\'">]+)/iu', $attribute), $text, $matches)) {
+            return htmlspecialchars_decode($matches[1]);
         }
 
         return;
