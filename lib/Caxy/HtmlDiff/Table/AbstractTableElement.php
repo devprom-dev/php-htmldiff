@@ -85,10 +85,10 @@ abstract class AbstractTableElement
      */
     public static function htmlFromNode($node)
     {
-        $domDocument = new \DOMDocument();
+        $domDocument = new \DOMDocument('1.0', 'UTF-8');
         $newNode = $domDocument->importNode($node, true);
         $domDocument->appendChild($newNode);
 
-        return trim($domDocument->saveHTML());
+        return trim($domDocument->saveHTML($domDocument->documentElement));
     }
 }
