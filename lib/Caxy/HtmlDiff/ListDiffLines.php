@@ -84,14 +84,11 @@ class ListDiffLines extends AbstractDiff
 
     protected function listByLines(string $old, string $new) : string
     {
-        $new = mb_convert_encoding($new, 'HTML-ENTITIES', "UTF-8");
-        $old = mb_convert_encoding($old, 'HTML-ENTITIES', "UTF-8");
+        $newDom = new DOMDocument('1.0', 'UTF-8');
+        $newDom->loadHTML('<?xml version="1.0" encoding="UTF-8"?>' .$new);
 
-        $newDom = new DOMDocument();
-        $newDom->loadHTML($new);
-
-        $oldDom = new DOMDocument();
-        $oldDom->loadHTML($old);
+        $oldDom = new DOMDocument('1.0', 'UTF-8');
+        $oldDom->loadHTML('<?xml version="1.0" encoding="UTF-8"?>' . $old);
 
         $newListNode = $this->findListNode($newDom);
         $oldListNode = $this->findListNode($oldDom);
@@ -395,18 +392,17 @@ class ListDiffLines extends AbstractDiff
             $bufferDom->appendChild($bufferDom->importNode($childNode, true));
         }
 
-        return trim($bufferDom->saveHTML());
+        return trim($bufferDom->saveHTML($bufferDom->documentElement));
     }
 
     private function setInnerHtml(DOMNode $node, string $html) : void
     {
         $html = sprintf('<%s>%s</%s>', 'body', $html, 'body');
-        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
 
         $node->nodeValue = '';
 
         $bufferDom = new DOMDocument('1.0', 'UTF-8');
-        $bufferDom->loadHTML($html);
+        $bufferDom->loadHTML('<?xml version="1.0" encoding="UTF-8"?>' . $html);
 
         $bodyNode = $bufferDom->getElementsByTagName('body')->item(0);
 
@@ -456,8 +452,6 @@ class ListDiffLines extends AbstractDiff
         if (isset($this->nodeCache[$nodeHash]) === true) {
             return $this->nodeCache[$nodeHash][$index];
         }
-
-        $listCache[$nodeHash] = [];
 
         foreach ($node->childNodes as $childNode) {
             if ($childNode instanceof DOMText === false) {
