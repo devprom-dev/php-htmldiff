@@ -99,7 +99,7 @@ class TableDiff extends AbstractDiff
 
         $this->buildTableDoms();
 
-        $this->diffDom = new \DOMDocument();
+        $this->diffDom = new \DOMDocument('1.0', 'UTF-8');
 
         $this->indexCellValues($this->newTable);
 
@@ -114,7 +114,7 @@ class TableDiff extends AbstractDiff
 
     protected function diffTableContent()
     {
-        $this->diffDom = new \DOMDocument();
+        $this->diffDom = new \DOMDocument('1.0', 'UTF-8');
         $this->diffTable = $this->newTable->cloneNode($this->diffDom);
         $this->diffDom->appendChild($this->diffTable);
 
@@ -626,7 +626,7 @@ class TableDiff extends AbstractDiff
      */
     protected function createDocumentWithHtml($text)
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->loadHTML(mb_convert_encoding(
             $this->purifyHtml(mb_convert_encoding($text, $this->config->getEncoding(), mb_detect_encoding($text))),
             'HTML-ENTITIES',
@@ -719,11 +719,11 @@ class TableDiff extends AbstractDiff
      */
     protected function htmlFromNode($node)
     {
-        $domDocument = new \DOMDocument();
+        $domDocument = new \DOMDocument('1.0', 'UTF-8');
         $newNode = $domDocument->importNode($node, true);
         $domDocument->appendChild($newNode);
 
-        return $domDocument->saveHTML();
+        return $domDocument->saveHTML($domDocument->documentElement);
     }
 
     /**
