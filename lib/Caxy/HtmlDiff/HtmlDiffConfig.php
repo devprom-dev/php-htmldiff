@@ -37,19 +37,20 @@ class HtmlDiffConfig
      * @var array
      */
     protected $isolatedDiffTags = array(
+        'th' => '[[REPLACE_TH]]',
+        'td' => '[[REPLACE_TD]]',
         'ol' => '[[REPLACE_ORDERED_LIST]]',
         'ul' => '[[REPLACE_UNORDERED_LIST]]',
         'sub' => '[[REPLACE_SUB_SCRIPT]]',
         'sup' => '[[REPLACE_SUPER_SCRIPT]]',
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
-        'table' => '[[REPLACE_TABLE]]',
         'strong' => '[[REPLACE_STRONG]]',
         'b' => '[[REPLACE_STRONG]]',
         'em' => '[[REPLACE_EM]]',
         'i' => '[[REPLACE_EM]]',
         'a' => '[[REPLACE_A]]',
         'img' => '[[REPLACE_IMG]]',
-        'pre' => '[[REPLACE_PRE]]',
+        'pre' => '[[REPLACE_PRE]]'
     );
 
     /**
