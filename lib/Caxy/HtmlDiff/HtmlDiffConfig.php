@@ -37,8 +37,6 @@ class HtmlDiffConfig
      * @var array
      */
     protected $isolatedDiffTags = array(
-        'th' => '[[REPLACE_TH]]',
-        'td' => '[[REPLACE_TD]]',
         'ol' => '[[REPLACE_ORDERED_LIST]]',
         'ul' => '[[REPLACE_UNORDERED_LIST]]',
         'sub' => '[[REPLACE_SUB_SCRIPT]]',
@@ -50,7 +48,8 @@ class HtmlDiffConfig
         'i' => '[[REPLACE_EM]]',
         'a' => '[[REPLACE_A]]',
         'img' => '[[REPLACE_IMG]]',
-        'pre' => '[[REPLACE_PRE]]'
+        'pre' => '[[REPLACE_PRE]]',
+        'table' => '[[REPLACE_TABLE]]'
     );
 
     /**
