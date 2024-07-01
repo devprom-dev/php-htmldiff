@@ -877,8 +877,7 @@ class TableDiff extends AbstractDiff
             $oldCell = $oldRow->getCell($newIndex);
 
             if ($oldCell) {
-                $percentage = null;
-                similar_text($oldCell->getInnerHtml(), $newCell->getInnerHtml(), $percentage);
+                $percentage = $oldCell->getInnerHtml() == $newCell->getInnerHtml() ? 100 : 0;
 
                 if ($percentage > ($this->config->getMatchThreshold() * 0.50)) {
                     $increment = $percentage;
