@@ -526,6 +526,6 @@ abstract class AbstractDiff
         $newNode = $domDocument->importNode($node, true);
         $domDocument->appendChild($newNode);
 
-        return $domDocument->saveHTML($domDocument->documentElement);
+        return html_entity_decode($domDocument->saveHTML($domDocument->documentElement));
     }
 }
