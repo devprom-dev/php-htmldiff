@@ -697,37 +697,6 @@ class TableDiff extends AbstractDiff
 
     /**
      * @param \DOMNode $node
-     *
-     * @return string
-     */
-    protected function getInnerHtml($node)
-    {
-        $innerHtml = '';
-        $children = $node->childNodes;
-
-        foreach ($children as $child) {
-            $innerHtml .= $this->htmlFromNode($child);
-        }
-
-        return $innerHtml;
-    }
-
-    /**
-     * @param \DOMNode $node
-     *
-     * @return string
-     */
-    protected function htmlFromNode($node)
-    {
-        $domDocument = new \DOMDocument('1.0', 'UTF-8');
-        $newNode = $domDocument->importNode($node, true);
-        $domDocument->appendChild($newNode);
-
-        return $domDocument->saveHTML($domDocument->documentElement);
-    }
-
-    /**
-     * @param \DOMNode $node
      * @param string   $html
      */
     protected function setInnerHtml($node, $html)
