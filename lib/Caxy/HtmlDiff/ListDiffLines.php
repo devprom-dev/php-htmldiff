@@ -383,18 +383,6 @@ class ListDiffLines extends AbstractDiff
         return $node->ownerDocument->saveHTML($node);
     }
 
-    private function getInnerHtml(DOMNode $node) : string
-    {
-        $bufferDom = new DOMDocument('1.0', 'UTF-8');
-
-        foreach($node->childNodes as $childNode)
-        {
-            $bufferDom->appendChild($bufferDom->importNode($childNode, true));
-        }
-
-        return trim($bufferDom->saveHTML($bufferDom->documentElement));
-    }
-
     private function setInnerHtml(DOMNode $node, string $html) : void
     {
         $html = sprintf('<%s>%s</%s>', 'body', $html, 'body');
