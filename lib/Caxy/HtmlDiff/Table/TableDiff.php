@@ -118,6 +118,11 @@ class TableDiff extends AbstractDiff
         $this->diffTable = $this->newTable->cloneNode($this->diffDom);
         $this->diffDom->appendChild($this->diffTable);
 
+        $items = (new \DOMXPath($this->newTable->getDomNode()->ownerDocument))->query("//colgroup");
+        foreach( $items as $item ) {
+            $this->diffTable->appendChild($this->diffDom->importNode($item->cloneNode(true), true));
+        }
+        
         $oldRows = $this->oldTable->getRows();
         $newRows = $this->newTable->getRows();
 
