@@ -394,8 +394,8 @@ abstract class AbstractDiff
 
     protected function splitInputsToWords()
     {
-        $this->setOldWords($this->convertHtmlToListOfWords($this->oldText));
-        $this->setNewWords($this->convertHtmlToListOfWords($this->newText));
+        $this->setOldWords($this->convertHtmlToListOfWords($this->oldText ?? ''));
+        $this->setNewWords($this->convertHtmlToListOfWords($this->newText ?? ''));
     }
 
     /**
